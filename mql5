@@ -1,0 +1,87 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                                      Spread Monitor |
+//|                                      https://www.forexroboteasy.com |
+//|                                             Developed by Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+#property strict
+
+// Spread Monitor settings
+input double spreadLevel = 1.0; // Spread level parameter
+
+// Spread Monitor oscillator colors
+color spreadColor = clrWhite;
+color spreadBelowLevelColor = clrGreen;
+color spreadAboveLevelColor = clrRed;
+
+// Spread Monitor oscillator buffer
+double spreadBuffer[];
+
+// Spread Monitor initialization function
+int OnInit()
+{
+   // Set the oscillator buffer size
+   ArrayResize(spreadBuffer, SymbolsTotal());
+
+   return(INIT_SUCCEEDED);
+}
+
+// Spread Monitor deinitialization function
+void OnDeinit(const int reason)
+{
+   // Clear the oscillator buffer
+   ArrayInitialize(spreadBuffer, 0);
+}
+
+// Spread Monitor tick event function
+void OnTick()
+{
+   // Loop through all currency pairs
+   for (int i = 0; i < SymbolsTotal(); i++)
+   {
+      // Retrieve the spread for the current currency pair
+      double spread = MarketInfo(SymbolName(i), MODE_SPREAD);
+
+      // Store the spread in the oscillator buffer
+      spreadBuffer[i] = spread;
+
+      // Check if the spread is below the spread level parameter
+      if (spread < spreadLevel)
+      {
+         // Set the oscillator color to green
+         ObjectSetString(0, 'SpreadOscillator_' + SymbolName(i), OBJPROP_COLOR, spreadBelowLevelColor);
+      }
+      else
+      {
+         // Set the oscillator color to the specified color
+         ObjectSetString(0, 'SpreadOscillator_' + SymbolName(i), OBJPROP_COLOR, spreadAboveLevelColor);
+      }
+
+      // Set the oscillator value to the spread
+      ObjectSetDouble(0, 'SpreadOscillator_' + SymbolName(i), OBJPROP_PRICE, spread);
+   }
+}
+
+// Spread Monitor chart event function
+void OnChartEvent(const int id, const long& lparam, const double& dparam, const string& sparam)
+{
+   // Check if the event is a chart resize event
+   if (id == CHARTEVENT_CHART_CHANGE)
+   {
+      // Loop through all currency pairs
+      for (int i = 0; i < SymbolsTotal(); i++)
+      {
+         // Check if the spread oscillator object exists
+         if (!ObjectExists(0, 'SpreadOscillator_' + SymbolName(i)))
+         {
+            // Create the spread oscillator object
+            ObjectCreate(0, 'SpreadOscillator_' + SymbolName(i), OBJ_HLINE, 0, 0, 0);
+         }
+
+         // Set the spread oscillator object properties
+         ObjectSetInteger(0, 'SpreadOscillator_' + SymbolName(i), OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSetInteger(0, 'SpreadOscillator_' + SymbolName(i), OBJPROP_WIDTH, 2);
+         ObjectSetInteger(0, 'SpreadOscillator_' + SymbolName(i), OBJPROP_BACK, false);
+      }
+   }
+}
